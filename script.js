@@ -9,7 +9,7 @@
 
   /* ─── Mobile Nav Toggle ─────────────────────────────────── */
   const hamburger = document.getElementById('nav-hamburger');
-  const navLinks  = document.getElementById('nav-links');
+  const navLinks = document.getElementById('nav-links');
 
   if (hamburger && navLinks) {
     hamburger.addEventListener('click', () => {
@@ -30,7 +30,7 @@
   const sections = document.querySelectorAll('main section[id], main [id]');
   const allNavLinks = document.querySelectorAll('.nav-link');
 
-  function updateActiveLink () {
+  function updateActiveLink() {
     let current = '';
     sections.forEach(section => {
       const top = section.getBoundingClientRect().top;
@@ -57,28 +57,28 @@
   }, { passive: true });
 
   /* ─── Testimonial Slider ────────────────────────────────── */
-  const track      = document.getElementById('testimonial-track');
-  const dotsWrap   = document.getElementById('slider-dots');
-  const prevBtn    = document.getElementById('slider-prev');
-  const nextBtn    = document.getElementById('slider-next');
+  const track = document.getElementById('testimonial-track');
+  const dotsWrap = document.getElementById('slider-dots');
+  const prevBtn = document.getElementById('slider-prev');
+  const nextBtn = document.getElementById('slider-next');
 
   if (track && dotsWrap && prevBtn && nextBtn) {
-    const cards    = Array.from(track.querySelectorAll('.testimonial-card'));
-    let current    = 0;
+    const cards = Array.from(track.querySelectorAll('.testimonial-card'));
+    let current = 0;
     let visibleCount = 3;
     let autoPlay;
 
-    function getVisibleCount () {
+    function getVisibleCount() {
       if (window.innerWidth <= 768) return 1;
       if (window.innerWidth <= 1100) return 2;
       return 3;
     }
 
-    function totalSlides () {
+    function totalSlides() {
       return Math.max(1, cards.length - visibleCount + 1);
     }
 
-    function buildDots () {
+    function buildDots() {
       dotsWrap.innerHTML = '';
       const n = totalSlides();
       for (let i = 0; i < n; i++) {
@@ -90,20 +90,20 @@
       }
     }
 
-    function updateDots () {
+    function updateDots() {
       dotsWrap.querySelectorAll('.dot').forEach((d, i) => {
         d.classList.toggle('active', i === current);
       });
     }
 
-    function getCardWidth () {
+    function getCardWidth() {
       if (cards.length === 0) return 0;
       const gap = 24;
       const trackWidth = track.parentElement.offsetWidth;
       return (trackWidth - gap * (visibleCount - 1)) / visibleCount + gap;
     }
 
-    function goTo (index) {
+    function goTo(index) {
       const n = totalSlides();
       current = Math.max(0, Math.min(index, n - 1));
       const offset = current * getCardWidth();
@@ -111,10 +111,10 @@
       updateDots();
     }
 
-    function next () { goTo(current + 1 < totalSlides() ? current + 1 : 0); }
-    function prev () { goTo(current - 1 >= 0 ? current - 1 : totalSlides() - 1); }
+    function next() { goTo(current + 1 < totalSlides() ? current + 1 : 0); }
+    function prev() { goTo(current - 1 >= 0 ? current - 1 : totalSlides() - 1); }
 
-    function init () {
+    function init() {
       visibleCount = getVisibleCount();
       current = 0;
       buildDots();
@@ -124,7 +124,7 @@
     nextBtn.addEventListener('click', () => { next(); resetAutoPlay(); });
     prevBtn.addEventListener('click', () => { prev(); resetAutoPlay(); });
 
-    function resetAutoPlay () {
+    function resetAutoPlay() {
       clearInterval(autoPlay);
       autoPlay = setInterval(next, 5000);
     }
@@ -163,10 +163,12 @@
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
-    revealEls.forEach((el, i) => {
+    revealEls.forEach((el) => {
       el.style.opacity = '0';
-      el.style.transform = 'translateY(24px)';
-      el.style.transition = `opacity 0.6s ease ${i * 0.05}s, transform 0.6s ease ${i * 0.05}s`;
+      el.style.transform = 'translateY(16px)';
+      el.style.transition =
+        'opacity 0.35s ease, transform 0.35s ease';
+
       observer.observe(el);
     });
   }
@@ -175,12 +177,46 @@
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
       const targetId = this.getAttribute('href').slice(1);
-      const target   = document.getElementById(targetId);
+      const target = document.getElementById(targetId);
       if (!target) return;
       e.preventDefault();
       const navHeight = stickyNav ? stickyNav.offsetHeight : 80;
       const top = target.getBoundingClientRect().top + window.scrollY - navHeight - 16;
       window.scrollTo({ top, behavior: 'smooth' });
+    });
+  });
+
+  /* ─── PHASE 1: Static Products — filter + per-product
+     WhatsApp buttons ───────────────────────────────────────
+     No Firebase yet. Products are hardcoded HTML in
+     products-section-snippet.html. Each card has its own
+     "Buy on WhatsApp" button that mentions that product by
+     name. Remove this block once inventory management
+     (Firestore + store.js) replaces the static product cards. */
+  const STORE_WHATSAPP_NUMBER = '919876543210'; // ← replace with real number
+
+  document.querySelectorAll('.store-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.store-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      document.querySelectorAll('.product-card').forEach(card => {
+        const show = !cat || card.dataset.category === cat;
+        card.style.display = show ? '' : 'none';
+      });
+    });
+  });
+
+  document.querySelectorAll('.btn-product-whatsapp').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.product-card');
+      const name = card?.dataset.product || 'this product';
+      const price = card?.dataset.price;
+      const priceText = price && price !== '___' ? ` (₹${price})` : '';
+      const msg = encodeURIComponent(
+        `🙏 Hi, I'm interested in ${name}${priceText} from the Sri Guruji Wellness Store. Could you share more details?`
+      );
+      window.open(`https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${msg}`, '_blank');
     });
   });
 
